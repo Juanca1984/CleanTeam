@@ -2,15 +2,27 @@
 
 ## Equipo
 
-
+Becky Zhu Wu
 
 ## Problema
 
-
+- La enseñanza tradicional se centra en la teoría.
+- Falta de actividades dinámicas y flexibles para reforzar el aprendizaje.
+- Carencia de herramientas para profesores que ajuste la dificultad.
+- Dificultad de creación de materiales dinámicos.
+- Los estudiantes no cuentan con espacios atractivos para practicar a su ritmo.
 
 ## Contexto
 
+El chino mandarín se ha integrado en los sistemas educativos de 85 países, con un notable aumento en la cantidad de estudiantes, especialmente en plataformas digitales como Duolingo, donde el número de usuarios ha crecido un 31% anual
 
+Aprender chino permite:
+
+Acceso a recursos técnicos y comunidades internacionales.
+Mayores oportunidades laborales.
+Diferenciación profesional.
+
+¿Desafío para los profesores?
 
 ## Alcance No-CRUD
 
