@@ -3,6 +3,11 @@
 ## Equipo
 
 Becky Zhu Wu
+Esteban Cimé Morales
+Alan Pérez Romero
+Diego Arreola Hernandez
+Juan Carlos Ceballos Medina
+
 
 ## Problema
 
@@ -236,5 +241,5 @@ Para la creación de una partida y gestión de temas los usuarios deberán regis
 
 
 ## Avance
-Cero
+Al momento el proyecto no cuenta con un avance, únicamente la primera versión de los requerimientos de alto nivel y las Historias de Usuario.
 
