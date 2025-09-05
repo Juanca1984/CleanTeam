@@ -3,10 +3,15 @@
 ## Equipo
 
 Becky Zhu Wu
+
 Esteban Cimé Morales
+
 Alan Pérez Romero
+
 Diego Arreola Hernandez
+
 Juan Carlos Ceballos Medina
+
 
 
 ## Problema
