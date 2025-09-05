@@ -219,6 +219,22 @@ La interfaz debe ser intuitiva para que el usuario pueda ver las opciones y conf
 ## Módulos
 
 
+#Creacion de Partida
+Este modulo le permitirá al usuario configurar una partida, eligiendo la modalidad, la lección y configurar parámetros  como limite de tiempo, etc.
+
+#Modalidad de Juego
+Se desarrollara un modulo por cada modalidad que se quiera añadir. Estos módulos serán lo mas independientes posibles para asegurar el bajo acoplamiento
+
+#Sistema Multijudaor
+Las partidas deben soportar la interaccion en tiempo real de varios jugadores, sincronizando acciones y manejando eventos
+
+#Gestion de Temas
+Existirán temas predeterminados, pero los usuarios podrán crear y editar temas que se enlazaran a los juegos.
+
+#Gestion de Usuarios
+Para la creación de una partida y gestión de temas los usuarios deberán registrarse, pero para unirse una partida podrán hacerlo en la modalidad de invitado
+
+
 ## Avance
 Cero
 
