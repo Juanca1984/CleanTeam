@@ -1,4 +1,4 @@
-package com.pee.dockerized.postgresql.user;
+package com.cleanteam.mandarinplayer;
 
 import java.util.List;
 
