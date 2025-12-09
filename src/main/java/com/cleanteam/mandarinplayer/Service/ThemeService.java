@@ -52,20 +52,18 @@ public class ThemeService {
         dto.setName(theme.getName());
         dto.setDescription(theme.getDescription());
         if (theme.getWords() != null) {
-            dto.setVocabulary(theme.getWords().stream().map(this::mapWordToDTO).collect(Collectors.toList()));
-        } else {
-            dto.setVocabulary(List.of());
+            dto.setVocabulary(theme.getWords().stream()
+                    .map(word -> {
+                        com.cleanteam.mandarinplayer.DTO.WordDTO wordDTO = new com.cleanteam.mandarinplayer.DTO.WordDTO();
+                        wordDTO.setId(word.getId());
+                        wordDTO.setCharacter(word.getCharacter());
+                        wordDTO.setPinyin(word.getPinyin());
+                        wordDTO.setTranslation(word.getTranslation());
+                        wordDTO.setThemeId(theme.getId());
+                        return wordDTO;
+                    })
+                    .collect(Collectors.toList()));
         }
-        return dto;
-    }
-
-    private WordDTO mapWordToDTO(Word word) {
-        WordDTO dto = new WordDTO();
-        dto.setId(word.getId());
-        dto.setCharacter(word.getCharacter());
-        dto.setPinyin(word.getPinyin());
-        dto.setTranslation(word.getTranslation());
-        dto.setThemeId(word.getTheme().getId());
         return dto;
     }
 }

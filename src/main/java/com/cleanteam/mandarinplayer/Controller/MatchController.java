@@ -30,10 +30,10 @@ public class MatchController {
     private final MatchStateManager matchStateManager;
 
     public MatchController(ThemeRepository themeRepository,
-                           GameModeRepository gameModeRepository,
-                           MatchRepository matchRepository,
-                           MatchConfigurer matchConfigurer,
-                           MatchStateManager matchStateManager) {
+            GameModeRepository gameModeRepository,
+            MatchRepository matchRepository,
+            MatchConfigurer matchConfigurer,
+            MatchStateManager matchStateManager) {
         this.themeRepository = themeRepository;
         this.gameModeRepository = gameModeRepository;
         this.matchRepository = matchRepository;
@@ -57,7 +57,7 @@ public class MatchController {
         return matchRepository.save(match);
     }
 
-    @PostMapping("/matches/start")
+    @PostMapping("/start")
     public Match start(@RequestBody StartMatchRequest req) {
         return matchStateManager.start(req);
     }

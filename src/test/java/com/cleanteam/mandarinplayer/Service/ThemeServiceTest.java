@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.cleanteam.mandarinplayer.DTO.ThemeDTO;
 import com.cleanteam.mandarinplayer.Model.Theme;
+import com.cleanteam.mandarinplayer.Model.Word;
 import com.cleanteam.mandarinplayer.Repository.ThemeRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -137,5 +138,72 @@ class ThemeServiceTest {
         assertEquals(1, result.size());
         assertEquals("Basic Greetings", result.get(0).getName());
         verify(themeRepository, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("Debe mapear tema con palabras a DTO correctamente")
+    void testMapThemeWithWordsToDTO() {
+        List<Word> words = new ArrayList<>();
+        Word word1 = new Word();
+        word1.setId(1L);
+        word1.setCharacter("一");
+        word1.setPinyin("yi");
+        word1.setTranslation("One");
+        words.add(word1);
+
+        testTheme.setWords(words);
+        when(themeRepository.findById(1L)).thenReturn(Optional.of(testTheme));
+
+        ThemeDTO result = themeService.getThemeById(1L);
+
+        assertNotNull(result);
+        assertNotNull(result.getVocabulary());
+        assertEquals(1, result.getVocabulary().size());
+    }
+
+    @Test
+    @DisplayName("Debe mapear tema sin palabras a DTO")
+    void testMapThemeWithoutWordsToDTO() {
+        testTheme.setWords(null);
+        when(themeRepository.findById(1L)).thenReturn(Optional.of(testTheme));
+
+        ThemeDTO result = themeService.getThemeById(1L);
+
+        assertNotNull(result);
+        assertNull(result.getVocabulary());
+    }
+
+    @Test
+    @DisplayName("Debe mapear tema con lista vacía de palabras")
+    void testMapThemeWithEmptyWordsToDTO() {
+        testTheme.setWords(new ArrayList<>());
+        when(themeRepository.findById(1L)).thenReturn(Optional.of(testTheme));
+
+        ThemeDTO result = themeService.getThemeById(1L);
+
+        assertNotNull(result);
+        assertNotNull(result.getVocabulary());
+        assertEquals(0, result.getVocabulary().size());
+    }
+
+    @Test
+    @DisplayName("Debe crear tema con descripción null")
+    void testCreateThemeWithNullDescription() {
+        ThemeDTO themeDTO = new ThemeDTO();
+        themeDTO.setName("Nueva Categoría");
+        themeDTO.setDescription(null);
+
+        Theme savedTheme = new Theme();
+        savedTheme.setId(3L);
+        savedTheme.setName("Nueva Categoría");
+        savedTheme.setDescription(null);
+
+        when(themeRepository.save(any(Theme.class))).thenReturn(savedTheme);
+
+        ThemeDTO result = themeService.createTheme(themeDTO);
+
+        assertNotNull(result);
+        assertEquals("Nueva Categoría", result.getName());
+        assertNull(result.getDescription());
     }
 }

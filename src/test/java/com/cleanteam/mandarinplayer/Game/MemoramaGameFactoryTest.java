@@ -1,6 +1,7 @@
 package com.cleanteam.mandarinplayer.Game;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 import java.util.HashSet;
@@ -15,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.cleanteam.mandarinplayer.Model.Match;
 import com.cleanteam.mandarinplayer.Model.Theme;
 import com.cleanteam.mandarinplayer.Service.MemoramaGameService;
+import com.cleanteam.mandarinplayer.DTO.FlipCardRequest;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Pruebas para MemoramaGameFactory")
@@ -57,7 +59,7 @@ class MemoramaGameFactoryTest {
         Game game = factory.createGame(testMatch);
         game.start();
 
-        verify(memoramaGameService, times(1)).initializeGame(testMatch);
+        verify(memoramaGameService, times(1)).initializeGameAndStore(testMatch);
     }
 
     @Test
@@ -69,7 +71,7 @@ class MemoramaGameFactoryTest {
         assertNotNull(game);
         game.start();
         
-        verify(memoramaGameService).initializeGame(testMatch);
+        verify(memoramaGameService).initializeGameAndStore(testMatch);
     }
 
     @Test
@@ -99,7 +101,7 @@ class MemoramaGameFactoryTest {
         Game game = factory.createGame(testMatch);
         game.start();
 
-        verify(memoramaGameService, times(1)).initializeGame(argThat(match -> 
+        verify(memoramaGameService, times(1)).initializeGameAndStore(argThat(match -> 
             match.getRoomCode().equals("TEST01") && 
             match.getGameType() == GameType.MEMORAMA
         ));
@@ -116,5 +118,19 @@ class MemoramaGameFactoryTest {
     void testCreateGameWithMatchHandling() {
         // El factory crea la instancia, no valida
         assertDoesNotThrow(() -> factory.createGame(testMatch));
+    }
+
+    @Test
+    @DisplayName("Debe delegaralfip al servicio")
+    void testGameOnFlip() {
+        Game game = factory.createGame(testMatch);
+        
+        FlipCardRequest request = new FlipCardRequest();
+        request.setRoomCode("TEST01");
+        request.setCardPosition(0);
+        
+        game.onFlip(request);
+        
+        verify(memoramaGameService, times(1)).flipCard(request);
     }
 }

@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import com.cleanteam.mandarinplayer.DTO.FlipCardRequest;
 import com.cleanteam.mandarinplayer.DTO.LobbyEvent;
 import com.cleanteam.mandarinplayer.DTO.StartMatchRequest;
 import com.cleanteam.mandarinplayer.Game.Game;
@@ -218,5 +219,128 @@ class MatchStateManagerTest {
 
         LobbyEvent event = eventCaptor.getValue();
         assertEquals(MatchStatus.IN_PROGRESS.name(), event.getStatus());
+    }
+
+    @Test
+    @DisplayName("Debe lanzar excepción si flip request es null")
+    void testFlipWithNullRequest() {
+        assertThrows(IllegalArgumentException.class, 
+            () -> matchStateManager.flip(null, null));
+    }
+
+    @Test
+    @DisplayName("Debe lanzar excepción si roomCode es null")
+    void testFlipWithNullRoomCode() {
+        FlipCardRequest request = new FlipCardRequest();
+        request.setRoomCode(null);
+
+        assertThrows(IllegalArgumentException.class,
+            () -> matchStateManager.flip(request, null));
+    }
+
+    @Test
+    @DisplayName("Debe lanzar excepción si sessionId es null")
+    void testFlipWithoutSessionId() {
+        FlipCardRequest request = new FlipCardRequest();
+        request.setRoomCode("TEST01");
+
+        assertThrows(IllegalArgumentException.class,
+            () -> matchStateManager.flip(request, null));
+    }
+
+    @Test
+    @DisplayName("Debe eliminar juego al terminar match")
+    void testEndMatch() {
+        matchStateManager.endMatch("TEST01");
+        
+        // El método solo remueve del mapa, no lanza excepción
+        assertDoesNotThrow(() -> matchStateManager.endMatch("TEST01"));
+    }
+
+    @Test
+    @DisplayName("Debe lanzar excepción si room no existe en onPlayerDisconnected")
+    void testOnPlayerDisconnectedRoomNotFound() {
+        when(matchRepository.findByRoomCode("NONEXISTENT")).thenReturn(Optional.empty());
+        
+        assertThrows(IllegalArgumentException.class, 
+            () -> matchStateManager.onPlayerDisconnected("NONEXISTENT", "session1"));
+    }
+
+    @Test
+    @DisplayName("Debe registrar múltiples desconexiones en la misma sala")
+    void testMultiplePlayersDisconnected() {
+        when(matchRepository.findByRoomCode("TEST01")).thenReturn(Optional.of(testMatch));
+
+        matchStateManager.onPlayerConnected("TEST01", "session1", "Player1");
+        matchStateManager.onPlayerConnected("TEST01", "session2", "Player2");
+        matchStateManager.onPlayerDisconnected("TEST01", "session1");
+        matchStateManager.onPlayerDisconnected("TEST01", "session2");
+
+        verify(messagingTemplate, atLeast(4)).convertAndSend(anyString(), any(LobbyEvent.class));
+    }
+
+    @Test
+    @DisplayName("Debe lanzar excepción si resolver juego falla por juego no disponible")
+    void testFlipWithGameNotResolved() {
+        FlipCardRequest request = new FlipCardRequest();
+        request.setRoomCode("TEST01");
+        request.setCardPosition(0);
+
+        org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor = 
+            mock(org.springframework.messaging.simp.stomp.StompHeaderAccessor.class);
+        when(accessor.getSessionId()).thenReturn("session1");
+
+        when(matchRepository.findByRoomCode("TEST01")).thenReturn(Optional.of(testMatch));
+        testMatch.setGame(null); // No hay juego disponible
+
+        // Debe lanzar IllegalStateException
+        assertThrows(IllegalStateException.class, 
+            () -> matchStateManager.flip(request, accessor));
+    }
+
+    @Test
+    @DisplayName("Debe publicar estado del juego después de flip")
+    void testFlipPublishesGameState() {
+        FlipCardRequest request = new FlipCardRequest();
+        request.setRoomCode("TEST01");
+        request.setCardPosition(0);
+
+        org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor = 
+            mock(org.springframework.messaging.simp.stomp.StompHeaderAccessor.class);
+        when(accessor.getSessionId()).thenReturn("session1");
+
+        when(matchRepository.findByRoomCode("TEST01")).thenReturn(Optional.of(testMatch));
+        testMatch.setGame(game);
+
+        assertDoesNotThrow(() -> matchStateManager.flip(request, accessor));
+    }
+
+    @Test
+    @DisplayName("Debe contar correctamente conexiones activas en publishLobby")
+    void testPublishLobbyCountsConnections() {
+        when(matchRepository.findByRoomCode("TEST01")).thenReturn(Optional.of(testMatch));
+
+        matchStateManager.onPlayerConnected("TEST01", "session1", "Player1");
+        matchStateManager.onPlayerConnected("TEST01", "session2", "Player2");
+
+        ArgumentCaptor<LobbyEvent> eventCaptor = ArgumentCaptor.forClass(LobbyEvent.class);
+        verify(messagingTemplate, atLeast(2)).convertAndSend(anyString(), eventCaptor.capture());
+
+        // Verificar que el evento tiene 2 conexiones
+        LobbyEvent event = eventCaptor.getValue();
+        assertEquals(2, event.getPlayersCount());
+    }
+
+    @Test
+    @DisplayName("Debe validar que flip request necesita roomCode")
+    void testFlipValidatesRoomCode() {
+        FlipCardRequest request = new FlipCardRequest();
+        request.setRoomCode(null);
+
+        org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor = 
+            mock(org.springframework.messaging.simp.stomp.StompHeaderAccessor.class);
+
+        assertThrows(IllegalArgumentException.class, 
+            () -> matchStateManager.flip(request, accessor));
     }
 }

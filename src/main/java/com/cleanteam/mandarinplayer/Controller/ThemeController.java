@@ -45,4 +45,10 @@ public class ThemeController {
     public ResponseEntity<List<WordDTO>> getWordsByTheme(@PathVariable Long themeId) {
         return ResponseEntity.ok(wordService.getWordsByTheme(themeId));
     }
+
+    @PostMapping("/{id}/vocabulary")
+    public ResponseEntity<WordDTO> addVocabulary(@PathVariable Long id, @RequestBody WordDTO wordDTO) {
+        wordDTO.setThemeId(id);
+        return ResponseEntity.ok(wordService.createWord(wordDTO));
+    }
 }

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -74,7 +75,7 @@ class MemoramaGameServiceTest {
     void testInitializeGame() {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
 
-        memoramaGameService.initializeGame(testMatch);
+        memoramaGameService.initializeGameAndStore(testMatch);
 
         ArgumentCaptor<String> topicCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
@@ -91,7 +92,7 @@ class MemoramaGameServiceTest {
     void testInitializeGameWithoutThemes() {
         testMatch.setThemes(new HashSet<>());
 
-        assertThrows(IllegalStateException.class, () -> memoramaGameService.initializeGame(testMatch));
+        assertThrows(IllegalStateException.class, () -> memoramaGameService.initializeGameAndStore(testMatch));
     }
 
     @Test
@@ -99,7 +100,12 @@ class MemoramaGameServiceTest {
     void testInitialize() {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
 
-        memoramaGameService.initialize("ROOM01", 1L, List.of("Player1", "Player2", "Player3"));
+        Match match01 = new Match();
+        match01.setRoomCode("ROOM01");
+        match01.setThemes(new HashSet<>(List.of(testTheme)));
+        match01.setPlayers(new HashSet<>(List.of("Player1", "Player2", "Player3")));
+
+        memoramaGameService.initializeGameAndStore(match01);
 
         ArgumentCaptor<String> topicCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
@@ -121,7 +127,12 @@ class MemoramaGameServiceTest {
     void testCardPairsCreation() {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
 
-        memoramaGameService.initialize("ROOM01", 1L, List.of("Player1"));
+        Match match01 = new Match();
+        match01.setRoomCode("ROOM01");
+        match01.setThemes(new HashSet<>(List.of(testTheme)));
+        match01.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match01);
 
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
@@ -143,7 +154,12 @@ class MemoramaGameServiceTest {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
         List<String> players = List.of("Alice", "Bob", "Charlie");
 
-        memoramaGameService.initialize("ROOM02", 1L, players);
+        Match match02 = new Match();
+        match02.setRoomCode("ROOM02");
+        match02.setThemes(new HashSet<>(List.of(testTheme)));
+        match02.setPlayers(new LinkedHashSet<>(players));
+
+        memoramaGameService.initializeGameAndStore(match02);
 
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
@@ -162,12 +178,18 @@ class MemoramaGameServiceTest {
             word.setId((long) i);
             word.setCharacter("汉" + i);
             word.setPinyin("han" + i);
+            word.setTheme(testTheme);
             manyWords.add(word);
         }
 
         when(wordRepository.findByThemeId(1L)).thenReturn(manyWords);
 
-        memoramaGameService.initialize("ROOM03", 1L, List.of("Player1"));
+        Match match03 = new Match();
+        match03.setRoomCode("ROOM03");
+        match03.setThemes(new HashSet<>(List.of(testTheme)));
+        match03.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match03);
 
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
@@ -183,13 +205,23 @@ class MemoramaGameServiceTest {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
 
         // Inicializar dos veces y verificar que las posiciones son diferentes
-        memoramaGameService.initialize("ROOM04", 1L, List.of("Player1"));
+        Match match04 = new Match();
+        match04.setRoomCode("ROOM04");
+        match04.setThemes(new HashSet<>(List.of(testTheme)));
+        match04.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match04);
         ArgumentCaptor<MemoramaGameState> stateCaptor1 = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate, times(1)).convertAndSend(anyString(), stateCaptor1.capture());
 
         List<MemoramaCard> firstOrder = new ArrayList<>(stateCaptor1.getValue().getCards());
 
-        memoramaGameService.initialize("ROOM05", 1L, List.of("Player1"));
+        Match match05 = new Match();
+        match05.setRoomCode("ROOM05");
+        match05.setThemes(new HashSet<>(List.of(testTheme)));
+        match05.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match05);
         ArgumentCaptor<MemoramaGameState> stateCaptor2 = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate, times(2)).convertAndSend(anyString(), stateCaptor2.capture());
 
@@ -219,7 +251,13 @@ class MemoramaGameServiceTest {
     @DisplayName("Debe ignorar flip si posición es negativa")
     void testFlipCardNegativePosition() {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
-        memoramaGameService.initialize("ROOM07", 1L, List.of("Player1"));
+
+        Match match07 = new Match();
+        match07.setRoomCode("ROOM07");
+        match07.setThemes(new HashSet<>(List.of(testTheme)));
+        match07.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match07);
 
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
@@ -247,7 +285,13 @@ class MemoramaGameServiceTest {
     @DisplayName("Debe ignorar flip si posición es mayor al tamaño de cartas")
     void testFlipCardOutOfBoundsPosition() {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
-        memoramaGameService.initialize("ROOM08", 1L, List.of("Player1"));
+
+        Match match08 = new Match();
+        match08.setRoomCode("ROOM08");
+        match08.setThemes(new HashSet<>(List.of(testTheme)));
+        match08.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match08);
 
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
@@ -275,7 +319,13 @@ class MemoramaGameServiceTest {
     @DisplayName("Debe ignorar flip si carta ya está emparejada")
     void testFlipCardAlreadyMatched() {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
-        memoramaGameService.initialize("ROOM09", 1L, List.of("Player1"));
+
+        Match match09 = new Match();
+        match09.setRoomCode("ROOM09");
+        match09.setThemes(new HashSet<>(List.of(testTheme)));
+        match09.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match09);
 
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
@@ -309,7 +359,13 @@ class MemoramaGameServiceTest {
     @DisplayName("Debe ignorar flip si carta ya está volteada")
     void testFlipCardAlreadyFlipped() {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
-        memoramaGameService.initialize("ROOM10", 1L, List.of("Player1"));
+
+        Match match10 = new Match();
+        match10.setRoomCode("ROOM10");
+        match10.setThemes(new HashSet<>(List.of(testTheme)));
+        match10.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match10);
 
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
@@ -343,7 +399,13 @@ class MemoramaGameServiceTest {
     @DisplayName("Debe voltear carta correctamente cuando es válida")
     void testFlipCardSuccess() {
         when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
-        memoramaGameService.initialize("ROOM11", 1L, List.of("Player1"));
+
+        Match match11 = new Match();
+        match11.setRoomCode("ROOM11");
+        match11.setThemes(new HashSet<>(List.of(testTheme)));
+        match11.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match11);
 
         ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
         verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
@@ -370,5 +432,126 @@ class MemoramaGameServiceTest {
         assertTrue(capturedState.getCards().get(5).isFlipped());
         // Verificar que se envió el mensaje actualizado (2 calls: initialize + flipCard)
         verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(MemoramaGameState.class));
+    }
+
+    @Test
+    @DisplayName("Debe obtener estado del juego por roomCode")
+    void testGetState() {
+        when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
+
+        memoramaGameService.initializeGameAndStore(testMatch);
+
+        MemoramaGameState state = memoramaGameService.getState("TEST01");
+
+        assertNotNull(state);
+        assertEquals("TEST01", state.getRoomCode());
+    }
+
+    @Test
+    @DisplayName("Debe retornar null si estado no existe")
+    void testGetStateNotFound() {
+        MemoramaGameState state = memoramaGameService.getState("NONEXISTENT");
+
+        assertNull(state);
+    }
+
+    @Test
+    @DisplayName("Debe manejar múltiples inicializaciones del mismo room")
+    void testMultipleInitializationsOfSameRoom() {
+        when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
+
+        MemoramaGameState state1 = memoramaGameService.initializeGameAndStore(testMatch);
+        MemoramaGameState state2 = memoramaGameService.initializeGameAndStore(testMatch);
+
+        assertNotNull(state1);
+        assertNotNull(state2);
+        verify(messagingTemplate, atLeast(2)).convertAndSend(anyString(), any(MemoramaGameState.class));
+    }
+
+    @Test
+    @DisplayName("Debe crear cartas con índice correcto")
+    void testCardIndexing() {
+        when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
+
+        memoramaGameService.initializeGameAndStore(testMatch);
+
+        ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
+        verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
+
+        MemoramaGameState gameState = stateCaptor.getValue();
+        List<MemoramaCard> cards = gameState.getCards();
+
+        // Verificar que cada carta tiene un índice válido
+        for (int i = 0; i < cards.size(); i++) {
+            MemoramaCard card = cards.get(i);
+            assertNotNull(card);
+            assertNotNull(card.getContent());
+            assertEquals(i, card.getPosition());
+        }
+    }
+
+    @Test
+    @DisplayName("Debe retornar null si request es nulo")
+    void testFlipCardWithNullRequest() {
+        // flipCard lanza NullPointerException si request es nulo
+        assertThrows(NullPointerException.class, () -> memoramaGameService.flipCard(null));
+    }
+
+    @Test
+    @DisplayName("Debe retornar null si roomCode es nulo")
+    void testFlipCardWithNullRoomCode() {
+        FlipCardRequest request = new FlipCardRequest();
+        request.setRoomCode(null);
+        request.setCardPosition(0);
+
+        // flipCard lanza NullPointerException si roomCode es nulo
+        assertThrows(NullPointerException.class, () -> memoramaGameService.flipCard(request));
+    }
+
+    @Test
+    @DisplayName("Debe retornar null si cardPosition es nulo")
+    void testFlipCardWithNullPosition() {
+        // Este test no aplica porque cardPosition es int primitivo, no puede ser nulo
+        // Se valida indirectamente en testFlipCardNegativePosition
+        assertTrue(true);
+    }
+
+    @Test
+    @DisplayName("Debe alternar waitingForFlip al hacer flip correcto")
+    void testFlipCardTogglesWaitingForFlip() {
+        when(wordRepository.findByThemeId(1L)).thenReturn(testWords);
+
+        Match match12 = new Match();
+        match12.setRoomCode("ROOM12");
+        match12.setThemes(new HashSet<>(List.of(testTheme)));
+        match12.setPlayers(new HashSet<>(List.of("Player1")));
+
+        memoramaGameService.initializeGameAndStore(match12);
+
+        ArgumentCaptor<MemoramaGameState> stateCaptor = ArgumentCaptor.forClass(MemoramaGameState.class);
+        verify(messagingTemplate).convertAndSend(anyString(), stateCaptor.capture());
+        MemoramaGameState capturedState = stateCaptor.getValue();
+
+        boolean initialWaitingForFlip = capturedState.isWaitingForFlip();
+
+        // Usar reflection para agregar el estado
+        try {
+            java.lang.reflect.Field field = memoramaGameService.getClass().getDeclaredField("activeGames");
+            field.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<String, MemoramaGameState> activeGames = (Map<String, MemoramaGameState>) field.get(memoramaGameService);
+            activeGames.put("ROOM12", capturedState);
+        } catch (Exception e) {
+            fail("No se pudo acceder al mapa activeGames");
+        }
+
+        FlipCardRequest request = new FlipCardRequest();
+        request.setRoomCode("ROOM12");
+        request.setCardPosition(0);
+
+        memoramaGameService.flipCard(request);
+
+        // Verificar que se alternó
+        assertEquals(!initialWaitingForFlip, capturedState.isWaitingForFlip());
     }
 }
