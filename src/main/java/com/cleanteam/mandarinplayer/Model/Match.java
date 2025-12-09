@@ -1,6 +1,9 @@
+// java
 package com.cleanteam.mandarinplayer.Model;
 
+import com.cleanteam.mandarinplayer.Game.Game;
 import com.cleanteam.mandarinplayer.Game.GameType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -14,15 +17,18 @@ public class Match {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, length = 16, nullable = false)
+    @Column(name = "room_code", unique = true, length = 16, nullable = false)
     private String roomCode;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private MatchStatus status;
 
-    @Enumerated(EnumType.STRING) // <--- USA ESTA ANOTACIÓN
+    @Enumerated(EnumType.STRING)
+    @Column(name = "game_type")
     private GameType gameType;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -33,11 +39,19 @@ public class Match {
     )
     private Set<Theme> themes = new HashSet<>();
 
-    // Simple para el lobby; si prefieres entidad Player, reemplazar por relación.
     @ElementCollection
     @CollectionTable(name = "match_players", joinColumns = @JoinColumn(name = "match_id"))
     @Column(name = "player_name")
     private Set<String> players = new HashSet<>();
+
+    // Este campo no se persiste en la BD; mantiene la instancia en memoria
+    @JsonIgnore
+    private transient Game game;
+
+    // Nuevo: JSON serializado del estado del juego (respaldo/persistencia)
+    @Lob
+    @Column(name = "game_state_json", columnDefinition = "TEXT")
+    private String gameStateJson;
 
     public Long getId() { return id; }
 
@@ -64,4 +78,12 @@ public class Match {
     public Set<String> getPlayers() { return players; }
 
     public void setPlayers(Set<String> players) { this.players = players; }
+
+    public Game getGame() { return game; }
+
+    public void setGame(Game game) { this.game = game; }
+
+    public String getGameStateJson() { return gameStateJson; }
+
+    public void setGameStateJson(String gameStateJson) { this.gameStateJson = gameStateJson; }
 }

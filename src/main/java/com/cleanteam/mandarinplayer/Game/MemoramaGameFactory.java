@@ -1,6 +1,7 @@
-// java
+
 package com.cleanteam.mandarinplayer.Game;
 
+import com.cleanteam.mandarinplayer.DTO.FlipCardRequest;
 import com.cleanteam.mandarinplayer.Model.Match;
 import com.cleanteam.mandarinplayer.Service.MemoramaGameService;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,6 @@ public class MemoramaGameFactory implements GameFactory {
         return new MemoramaGame(match, memoramaGameService);
     }
 
-
     public class MemoramaGame implements Game {
 
         private final Match match;
@@ -32,9 +32,18 @@ public class MemoramaGameFactory implements GameFactory {
 
         @Override
         public void start() {
-            // Inicializa el estado del juego con datos del match
-            service.initializeGame(match);
-            // Si necesitas emitir eventos adicionales, hazlo dentro del servicio
+            service.initializeGameAndStore(match);
+        }
+
+        @Override
+        public void onFlip(FlipCardRequest req) {
+            // Delegar la lógica de flip al servicio:
+            // - validar turno/jugador
+            // - revelar carta
+            // - comprobar pareja
+            // - actualizar estado en BD si aplica
+            // - emitir eventos (WebSocket) a jugadores
+            service.flipCard(req);
         }
     }
 }

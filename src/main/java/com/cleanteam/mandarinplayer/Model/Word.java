@@ -1,5 +1,6 @@
 package com.cleanteam.mandarinplayer.Model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,6 +34,7 @@ public class Word {
     // FetchType.LAZY improves performance by not loading the Theme unless requested
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "theme_id", nullable = false)
+    @JsonBackReference
     private Theme theme;
 
     @Override

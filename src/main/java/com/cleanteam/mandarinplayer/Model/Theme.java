@@ -1,5 +1,6 @@
 package com.cleanteam.mandarinplayer.Model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -26,6 +27,7 @@ public class Theme {
     // mappedBy = "theme" tells Hibernate the relationship is owned by the 'theme' field in the Word class
     // orphanRemoval = true: If you remove a word from this list, it is deleted from the database
     @OneToMany(mappedBy = "theme", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Word> words = new ArrayList<>();
 
     // --- HELPER METHODS (Best practice for bidirectional relationships) ---

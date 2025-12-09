@@ -4,7 +4,6 @@ package com.cleanteam.mandarinplayer.Service;
 import com.cleanteam.mandarinplayer.DTO.FlipCardRequest;
 import com.cleanteam.mandarinplayer.DTO.GameStateResponse;
 import com.cleanteam.mandarinplayer.Model.Match;
-import com.cleanteam.mandarinplayer.Model.MatchStatus;
 import com.cleanteam.mandarinplayer.Model.MemoramaCard;
 import com.cleanteam.mandarinplayer.Model.MemoramaGameState;
 import com.cleanteam.mandarinplayer.Model.Word;
@@ -32,21 +31,26 @@ public class MemoramaGameService {
         this.matchRepository = matchRepository;
     }
 
-    // java
-    public void initializeGame(Match match) {
+    // Nuevo: inicializa y guarda el estado en activeGames, retorna el estado creado
+    public MemoramaGameState initializeGameAndStore(Match match) {
         String roomCode = match.getRoomCode();
         Long themeId = match.getThemes().stream()
                 .findFirst()
                 .map(t -> t.getId())
                 .orElseThrow(() -> new IllegalStateException("Match sin temas"));
 
-        // Los jugadores ya son nicknames (String)
         List<String> playerNicknames = new ArrayList<>(match.getPlayers());
+        MemoramaGameState gameState = buildInitialState(roomCode, themeId, playerNicknames);
 
-        initialize(roomCode, themeId, playerNicknames);
+        activeGames.put(roomCode, gameState);
+
+        // publicar estado inicial
+        messagingTemplate.convertAndSend("/topic/game/" + roomCode, gameState);
+        return gameState;
     }
 
-    public void initialize(String roomCode, Long themeId, List<String> playerNicknames) {
+    // Extraído para claridad
+    private MemoramaGameState buildInitialState(String roomCode, Long themeId, List<String> playerNicknames) {
         List<Word> words = wordRepository.findByThemeId(themeId);
         List<Word> selectedWords = words.stream().limit(8).toList();
 
@@ -71,40 +75,46 @@ public class MemoramaGameService {
         for (String nickname : playerNicknames) {
             gameState.getPlayerScores().put(nickname, 0);
         }
-
-        messagingTemplate.convertAndSend("/topic/game/" + roomCode, gameState);
-
-
+        return gameState;
     }
 
-    public void flipCard(FlipCardRequest request) {
+    // Expone el estado guardado
+    public MemoramaGameState getState(String roomCode) {
+        return activeGames.get(roomCode);
+    }
+
+    // Maneja el flip; actualiza el estado en memoria y publica via STOMP
+    public GameStateResponse flipCard(FlipCardRequest request) {
         String roomCode = request.getRoomCode();
         Integer position = request.getCardPosition();
 
         MemoramaGameState state = activeGames.get(roomCode);
         if (state == null) {
-            // Opcional: notificar error
-            return;
+            // Opcional: enviar error por topic de usuario
+            return null;
         }
 
         if (position == null || position < 0 || position >= state.getCards().size()) {
-            // Opcional: notificar error
-            return;
+            return null;
         }
 
         MemoramaCard card = state.getCards().get(position);
         if (card.isMatched() || card.isFlipped()) {
-            // Ignorar si ya está volteada o emparejada
-            return;
+            return null;
         }
 
         card.setFlipped(true);
 
-        // Lógica mínima: alternar espera y jugador actual si fuese necesario
-        state.setWaitingForFlip(false);
+        // Aquí añade la lógica real de comprobación de pares, puntuación, cambio de turno, etc.
+        // Por simplicidad se alterna el flag:
+        state.setWaitingForFlip(!state.isWaitingForFlip());
 
-        // Enviar el estado actualizado al tópico STOMP
+        // publicar estado actualizado
         messagingTemplate.convertAndSend("/topic/game/" + roomCode, state);
-    }
 
+        // Construir y devolver un GameStateResponse (usa tu DTO real)
+        GameStateResponse response = new GameStateResponse();
+        // TODO: mapear fields relevantes desde 'state' al DTO
+        return response;
+    }
 }
